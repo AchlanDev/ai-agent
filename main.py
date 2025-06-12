@@ -110,31 +110,56 @@ messages = [
 
 client = genai.Client(api_key=api_key)
 
-response = client.models.generate_content(
+# response = client.models.generate_content(
+#     model='gemini-2.0-flash-001',
+#     contents=messages,
+#     config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
+# )
+
+# prompt_tokens = response.usage_metadata.prompt_token_count
+# response_tokens = response.usage_metadata.candidates_token_count
+
+# if verbose_mode:
+#     print(f"User prompt: {user_prompt}")
+#     print(f"Prompt tokens: {prompt_tokens}")
+#     print(f"Response tokens: {response_tokens}")
+
+# if response.function_calls:
+#     for function in response.function_calls:
+#         function_call_result = call_function(function, verbose=verbose_mode)
+#         if (
+#             not function_call_result.parts
+#             or not hasattr(function_call_result.parts[0], "function_response") 
+#             or not hasattr(function_call_result.parts[0].function_response, "response")
+#         ):
+#             raise Exception("Fatal Exception: cannot continue.")
+#         if verbose_mode:
+#             print(f"-> {function_call_result.parts[0].function_response.response}")
+
+# else:
+#     print(response.text)
+
+iterations = 0
+
+while iterations < 20:
+    print(f"loop iteration {iterations}")
+
+    response = client.models.generate_content(
     model='gemini-2.0-flash-001',
     contents=messages,
     config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
 )
 
-prompt_tokens = response.usage_metadata.prompt_token_count
-response_tokens = response.usage_metadata.candidates_token_count
+    for candidate in response.candidates:
+        messages.append(candidate.content)
 
-if verbose_mode:
-    print(f"User prompt: {user_prompt}")
-    print(f"Prompt tokens: {prompt_tokens}")
-    print(f"Response tokens: {response_tokens}")
+    if response.function_calls:
+        for function in response.function_calls:
+            result = call_function(function)
+            messages.append(result)
 
-if response.function_calls:
-    for function in response.function_calls:
-        function_call_result = call_function(function, verbose=verbose_mode)
-        if (
-            not function_call_result.parts
-            or not hasattr(function_call_result.parts[0], "function_response") 
-            or not hasattr(function_call_result.parts[0].function_response, "response")
-        ):
-            raise Exception("Fatal Exception: cannot continue.")
-        if verbose_mode:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
+    if not response.function_calls:
+        print(response.text)
+        break
 
-else:
-    print(response.text)
+    iterations += 1

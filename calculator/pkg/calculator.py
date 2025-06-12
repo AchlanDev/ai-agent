@@ -9,13 +9,17 @@ class Calculator:
             "/": lambda a, b: a / b,
         }
         self.precedence = {
-            "+": 1,
+            "+": 3,
             "-": 1,
             "*": 2,
             "/": 2,
         }
 
     def evaluate(self, expression):
+        print(f"DEBUG: + precedence is {self.precedence['+']}")  # Add this line
+        if not expression or expression.isspace():
+            return None
+
         if not expression or expression.isspace():
             return None
         tokens = expression.strip().split()
